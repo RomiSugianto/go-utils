@@ -58,11 +58,13 @@ A simple and effective housekeeper for Go applications.
 package main
 
 import (
+    "github.com/romisugianto/go-utils/utils/logger"
     "github.com/romisugianto/go-utils/utils/housekeeper"
 )
 
 func main() {
-    hk, err := housekeeper.NewHousekeeper("myApp")
+    logger.NewLogger("myApp")
+    hk, err := housekeeper.NewHousekeeper(logger)
     if err != nil {
         panic(err)
     }
@@ -96,11 +98,13 @@ A simple and effective splitter for Go applications.
 package main
 
 import (
+    "github.com/romisugianto/go-utils/utils/logger"
     "github.com/romisugianto/go-utils/utils/splitter"
 )
 
 func main() {
-    sp, err := splitter.NewSplitter("myApp")
+    logger.NewLogger("myApp")
+    sp, err := splitter.NewSplitter(logger)
     if err != nil {
         panic(err)
     }
