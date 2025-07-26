@@ -129,11 +129,11 @@ func (s *Splitter) SplitFileByLines(filePath string, linesPerFile int, outputDir
 	duration := time.Since(startTime)
 
 	// Log processing summary
-	s.logger.Info("Processed file: %s", fileName)
-	s.logger.Info("  - Original size: %.2f MB", float64(fileSize)/1024/1024)
-	s.logger.Info("  - Files created: %d", actualFileCount)
-	s.logger.Info("  - Processing time: %.2f seconds", duration.Seconds())
-	s.logger.Info("  - Processing rate: %.2f MB/sec", (float64(fileSize)/1024/1024)/duration.Seconds())
-	s.logger.Info("  - Processed file moved to: %s", processedPath)
+	s.logger.Summary("Processed file: %s", fileName)
+	s.logger.Summary("  - Original size: %.2f MB", float64(fileSize)/1024/1024)
+	s.logger.Summary("  - Files created: %d", actualFileCount)
+	s.logger.Summary("  - Processing time: %.2f seconds", duration.Seconds())
+	s.logger.Summary("  - Processing rate: %.2f MB/sec", (float64(fileSize)/1024/1024)/duration.Seconds())
+	s.logger.Summary("  - Processed file moved to: %s", processedPath)
 	return nil
 }

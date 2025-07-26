@@ -107,13 +107,13 @@ func (h *Housekeeper) HousekeepFilesByCount(dir string, maxFiles int) error {
 
 func (h *Housekeeper) logRemovals(files []string, operation string) {
 	if len(files) == 0 {
-		h.logger.Info("No files removed during %s", operation)
+		h.logger.Summary("No files removed during %s", operation)
 		return
 	}
 
 	sort.Strings(files)
-	h.logger.Info("Removed %d files during %s:", len(files), operation)
+	h.logger.Summary("Removed %d files during %s:", len(files), operation)
 	for _, f := range files {
-		h.logger.Info("  - %s", f)
+		h.logger.Summary("  - %s", f)
 	}
 }

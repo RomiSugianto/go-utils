@@ -100,6 +100,11 @@ func (l *Logger) Warning(format string, args ...any) {
 	l.log("WARNING", format, args...)
 }
 
+// Summary logs a summary message
+func (l *Logger) Summary(format string, args ...any) {
+	l.log("SUMMARY", format, args...)
+}
+
 // DisplayCredits displays the application credits/banner
 func (l *Logger) DisplayCredits(banner string, appName string, appVersion string) {
 	appNameUpper := strings.ToUpper(appName)
