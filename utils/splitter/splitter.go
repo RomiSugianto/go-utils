@@ -17,25 +17,21 @@ type Splitter struct {
 }
 
 // NewSplitter creates a new splitter instance
-func NewSplitter(appName string) (*Splitter, error) {
-	// Create a new logger instance
-	log, err := logger.NewLogger(appName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
-	}
-
-	return &Splitter{
-		logger: log,
-	}, nil
+func NewSplitter(log *logger.Logger) *Splitter {
+    return &Splitter{logger: log}
 }
 
 // SplitFileByLines splits a file into multiple files based on the number of lines specified.
-// It creates output files in the specified output directory.
-// If the processed directory is specified, it moves the original file there after splitting.
-// It logs the splitting summary including the number of files created and the time taken.
-// The original file is moved to the processed directory after splitting.
-// It returns an error if any operation fails.
 func (s *Splitter) SplitFileByLines(filePath string, linesPerFile int, outputDir string, processedDir string) error {
+	// Input validation
+	if linesPerFile <= 0 {
+		return fmt.Errorf("lines per file must be positive, got %d", linesPerFile)
+	}
+	if filePath == "" || outputDir == "" || processedDir == "" {
+		return fmt.Errorf("filePath, outputDir, and processedDir must not be empty")
+	}
+
+	// Start time for processing
 	startTime := time.Now()
 
 	// Ensure the output and processed directory exists

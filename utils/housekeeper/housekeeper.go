@@ -16,110 +16,104 @@ type Housekeeper struct {
 }
 
 // NewHousekeep creates a new Housekeep instance
-func NewHousekeeper(appName string) (*Housekeeper, error) {
-	// Create a new logger instance
-	log, err := logger.NewLogger(appName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
-	}
-
-	return &Housekeeper{
-		logger: log,
-	}, nil
+func NewHousekeeper(log *logger.Logger) *Housekeeper {
+	return &Housekeeper{logger: log}
 }
 
 // HousekeepFilesByAge manages the housekeeping of files in a directory based on their age
 func (h *Housekeeper) HousekeepFilesByAge(dir string, maxAgeDays int) error {
-	// Ensure the directory exists
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		h.logger.Error("directory does not exist: %s", dir)
-		return nil
+	if maxAgeDays < 0 {
+		return fmt.Errorf("maxAgeDays must be >= 0, got %d", maxAgeDays)
 	}
 
-	// Get current time
-	now := time.Now()
+	// Verify directory exists
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return fmt.Errorf("directory does not exist: %s", dir)
+	}
 
-	// Read directory contents
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		h.logger.Error("failed to read directory: %v", err)
-		return nil
+		return fmt.Errorf("failed to read directory %s: %w", dir, err)
 	}
 
-	var removedFiles []string
+	now := time.Now()
+	cutoff := now.Add(-time.Duration(maxAgeDays*24) * time.Hour)
+	var removed []string
 
-	// Iterate over files and check their modification time
 	for _, file := range files {
-		if !file.IsDir() {
-			filePath := filepath.Join(dir, file.Name())
-			info, err := file.Info()
-			if err != nil {
-				h.logger.Error("Error getting info for file %s: %v", filePath, err)
+		if file.IsDir() {
+			continue
+		}
+
+		path := filepath.Join(dir, file.Name())
+		info, err := file.Info()
+		if err != nil {
+			h.logger.Error("Failed to get file info for %s: %v", path, err)
+			continue
+		}
+
+		if info.ModTime().Before(cutoff) {
+			if err := os.Remove(path); err != nil {
+				h.logger.Error("Failed to remove file %s: %v", path, err)
 				continue
 			}
-
-			// Check if the file is older than maxAgeDays
-			if now.Sub(info.ModTime()).Hours() > float64(maxAgeDays*24) {
-				if err := os.Remove(filePath); err != nil {
-					h.logger.Error("Failed to remove file %s: %v", filePath, err)
-				} else {
-					removedFiles = append(removedFiles, filePath)
-				}
-			}
+			removed = append(removed, path)
 		}
 	}
 
-	sort.Strings(removedFiles)
-	for _, removedFile := range removedFiles {
-		h.logger.Info("Removed old file: %s", removedFile)
-	}
-
+	h.logRemovals(removed, "age-based cleanup")
 	return nil
 }
 
-// housekeepFilesByCount manages the housekeeping of files in a directory based on a maximum count
 func (h *Housekeeper) HousekeepFilesByCount(dir string, maxFiles int) error {
-	// Ensure the directory exists
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		h.logger.Error("directory does not exist: %s", dir)
-		return nil
+	if maxFiles < 0 {
+		return fmt.Errorf("maxFiles must be >= 0, got %d", maxFiles)
 	}
 
-	// Read directory contents
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return fmt.Errorf("directory does not exist: %s", dir)
+	}
+
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		h.logger.Error("failed to read directory: %v", err)
+		return fmt.Errorf("failed to read directory %s: %w", dir, err)
+	}
+
+	if len(files) <= maxFiles {
+		h.logger.Info("No files to remove (current: %d, max: %d)", len(files), maxFiles)
 		return nil
 	}
 
-	// Sort files by modification time (oldest first)
+	// Sort by mod time (oldest first)
 	sort.Slice(files, func(i, j int) bool {
 		infoI, _ := files[i].Info()
 		infoJ, _ := files[j].Info()
 		return infoI.ModTime().Before(infoJ.ModTime())
 	})
 
-	if len(files) <= maxFiles {
-		h.logger.Info("No files to remove, count is within limit.")
-		return nil
-	}
-
-	var removedFiles []string
-
-	// Remove oldest files until we reach the maxFiles limit
+	var removed []string
 	for i := 0; i < len(files)-maxFiles; i++ {
-		filePath := filepath.Join(dir, files[i].Name())
-		if err := os.Remove(filePath); err != nil {
-			h.logger.Error("Failed to remove file %s: %v", filePath, err)
+		path := filepath.Join(dir, files[i].Name())
+		if err := os.Remove(path); err != nil {
+			h.logger.Error("Failed to remove file %s: %v", path, err)
 			continue
 		}
-		removedFiles = append(removedFiles, filePath)
+		removed = append(removed, path)
 	}
 
-	sort.Strings(removedFiles)
-	for _, removedFile := range removedFiles {
-		h.logger.Info("Removed old file: %s", removedFile)
-	}
-
+	h.logRemovals(removed, "count-based cleanup")
 	return nil
+}
+
+func (h *Housekeeper) logRemovals(files []string, operation string) {
+	if len(files) == 0 {
+		h.logger.Info("No files removed during %s", operation)
+		return
+	}
+
+	sort.Strings(files)
+	h.logger.Info("Removed %d files during %s:", len(files), operation)
+	for _, f := range files {
+		h.logger.Info("  - %s", f)
+	}
 }
