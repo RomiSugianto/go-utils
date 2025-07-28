@@ -14,7 +14,9 @@ func TestHousekeepFilesByAge(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupFiles   map[string]time.Time // filename -> modTime
+		setupDirs    []string            // subdirectories to create
 		maxAgeDays   int
+		recursive    bool
 		wantRemoved  []string
 		wantKept     []string
 		expectError  bool
@@ -39,10 +41,40 @@ func TestHousekeepFilesByAge(t *testing.T) {
 			wantKept:   []string{"new1.txt", "new2.txt"},
 		},
 		{
-			name: "invalid directory",
-			setupFiles: map[string]time.Time{},
-			maxAgeDays: 1,
+			name:        "invalid directory",
+			setupFiles:  map[string]time.Time{},
+			maxAgeDays:  1,
 			expectError: true,
+		},
+		{
+			name: "recursive cleanup",
+			setupFiles: map[string]time.Time{
+				"root_old.txt":    time.Now().Add(-48 * time.Hour),
+				"root_new.txt":     time.Now(),
+				"sub1/old.txt":    time.Now().Add(-72 * time.Hour),
+				"sub1/new.txt":     time.Now(),
+				"sub2/sub_old.txt": time.Now().Add(-96 * time.Hour),
+				"sub2/sub_new.txt": time.Now(),
+			},
+			setupDirs:    []string{"sub1", "sub2"},
+			maxAgeDays:   1,
+			recursive:    true,
+			wantRemoved:  []string{"root_old.txt", "sub1/old.txt", "sub2/sub_old.txt"},
+			wantKept:     []string{"root_new.txt", "sub1/new.txt", "sub2/sub_new.txt"},
+		},
+		{
+			name: "non-recursive cleanup with subdirs",
+			setupFiles: map[string]time.Time{
+				"root_old.txt":    time.Now().Add(-48 * time.Hour),
+				"root_new.txt":     time.Now(),
+				"sub1/old.txt":    time.Now().Add(-72 * time.Hour),
+				"sub1/new.txt":     time.Now(),
+			},
+			setupDirs:    []string{"sub1"},
+			maxAgeDays:   1,
+			recursive:    false,
+			wantRemoved:  []string{"root_old.txt"},
+			wantKept:     []string{"root_new.txt", "sub1/old.txt", "sub1/new.txt"},
 		},
 	}
 
@@ -51,9 +83,20 @@ func TestHousekeepFilesByAge(t *testing.T) {
 			// Setup test environment
 			testDir := t.TempDir()
 
+			// Create subdirectories
+			for _, dir := range tt.setupDirs {
+				fullPath := filepath.Join(testDir, dir)
+				if err := os.MkdirAll(fullPath, 0755); err != nil {
+					t.Fatalf("setup failed creating directory %s: %v", dir, err)
+				}
+			}
+
 			// Create test files with specific mod times
 			for name, modTime := range tt.setupFiles {
 				path := filepath.Join(testDir, name)
+				if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+					t.Fatalf("setup failed creating parent directories for %s: %v", name, err)
+				}
 				if err := os.WriteFile(path, []byte("content"), 0644); err != nil {
 					t.Fatalf("setup failed: %v", err)
 				}
@@ -74,7 +117,7 @@ func TestHousekeepFilesByAge(t *testing.T) {
 			}
 
 			// Execute
-			err := hk.HousekeepFilesByAge(testPath, tt.maxAgeDays)
+			err := hk.HousekeepFilesByAge(testPath, tt.maxAgeDays, tt.recursive)
 
 			// Verify results
 			if tt.expectError {
@@ -100,7 +143,7 @@ func TestHousekeepFilesByAge(t *testing.T) {
 			for _, name := range tt.wantKept {
 				path := filepath.Join(testDir, name)
 				if _, err := os.Stat(path); err != nil {
-					t.Errorf("file %q should not have been removed", name)
+					t.Errorf("file %q should not have been removed: %v", name, err)
 				}
 			}
 		})

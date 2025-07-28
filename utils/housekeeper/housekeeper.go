@@ -21,7 +21,7 @@ func NewHousekeeper(log *logger.Logger) *Housekeeper {
 }
 
 // HousekeepFilesByAge manages the housekeeping of files in a directory based on their age
-func (h *Housekeeper) HousekeepFilesByAge(dir string, maxAgeDays int) error {
+func (h *Housekeeper) HousekeepFilesByAge(dir string, maxAgeDays int, recursive ...bool) error {
 	if maxAgeDays < 0 {
 		return fmt.Errorf("maxAgeDays must be >= 0, got %d", maxAgeDays)
 	}
@@ -31,34 +31,41 @@ func (h *Housekeeper) HousekeepFilesByAge(dir string, maxAgeDays int) error {
 		return fmt.Errorf("directory does not exist: %s", dir)
 	}
 
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return fmt.Errorf("failed to read directory %s: %w", dir, err)
+	recursiveFlag := false
+	if len(recursive) > 0 {
+		recursiveFlag = recursive[0]
 	}
 
+	var removed []string
 	now := time.Now()
 	cutoff := now.Add(-time.Duration(maxAgeDays*24) * time.Hour)
-	var removed []string
 
-	for _, file := range files {
-		if file.IsDir() {
-			continue
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			h.logger.Error("Error accessing path %s: %v", path, err)
+			return nil
 		}
 
-		path := filepath.Join(dir, file.Name())
-		info, err := file.Info()
-		if err != nil {
-			h.logger.Error("Failed to get file info for %s: %v", path, err)
-			continue
+		// Skip directories unless we're processing them recursively
+		if info.IsDir() {
+			if !recursiveFlag && path != dir {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if info.ModTime().Before(cutoff) {
 			if err := os.Remove(path); err != nil {
 				h.logger.Error("Failed to remove file %s: %v", path, err)
-				continue
+				return nil
 			}
 			removed = append(removed, path)
 		}
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error walking directory %s: %w", dir, err)
 	}
 
 	h.logRemovals(removed, "age-based cleanup")
