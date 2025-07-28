@@ -100,6 +100,11 @@ func (l *Logger) Warning(format string, args ...any) {
 	l.log("WARNING", format, args...)
 }
 
+// Debug logs a debug message
+func (l *Logger) Debug(format string, args ...any) {
+	l.log("DEBUG", format, args...)
+}
+
 // Summary logs a summary message
 func (l *Logger) Summary(format string, args ...any) {
 	l.log("SUMMARY", format, args...)
