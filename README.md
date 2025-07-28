@@ -68,7 +68,6 @@ func main() {
     if err != nil {
         panic(err)
     }
-    defer hk.Close()
 
 		dir := "./test"
 
@@ -84,8 +83,8 @@ func main() {
 
 #### Housekeeper Methods
 
-- **NewHousekeeper(appName string)**: Creates a new housekeeper instance. If no application name is provided, it defaults to "script".
-- **HousekeepFilesByAge(dir string, maxAgeDays int)**: Manages the housekeeping of files in a directory based on their age.
+- **NewHousekeeper(appName string)**: Creates a new housekeeper instance.
+- **HousekeepFilesByAge(dir string, maxAgeDays int), recursive ...bool)**: Manages the housekeeping of files in a directory based on their age, recrusive or not.
 - **HousekeepFilesByCount(dir string, maxFiles int)**: Manages the housekeeping of files in a directory based on a maximum count.
 
 ### Splitter
@@ -108,7 +107,6 @@ func main() {
     if err != nil {
         panic(err)
     }
-    defer sp.Close()
 
     testFile := "./test.txt"
     outputDir := "./output"
@@ -122,5 +120,5 @@ func main() {
 
 #### Splitter Methods
 
-- **NewSplitter(appName string)**: Creates a new splitter instance. If no application name is provided, it defaults to "script".
+- **NewSplitter(appName string)**: Creates a new splitter instance.
 - **SplitFileByLines(filePath string, linesPerFile int, outputDir string, processedDir string)**: Splits a file into multiple files based on the number of lines specified.
