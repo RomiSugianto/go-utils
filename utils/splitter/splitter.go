@@ -1,3 +1,4 @@
+// Created by Romi Sugianto - https://romisugi.dev
 package splitter
 
 import (
