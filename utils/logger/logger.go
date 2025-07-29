@@ -96,6 +96,16 @@ func (l *Logger) Error(format string, args ...any) {
 	l.log("ERROR", format, args...)
 }
 
+// Fatal logs a fatal error message and exits the application
+func (l *Logger) Fatal(format string, args ...any) {
+	l.log("FATAL", format, args...)
+	// Close the log file before exiting
+	if err := l.Close(); err != nil {
+		fmt.Printf("Failed to close log file: %v\n", err)
+	}
+	os.Exit(1)
+}
+
 // Warning logs a warning message
 func (l *Logger) Warning(format string, args ...any) {
 	l.log("WARNING", format, args...)
