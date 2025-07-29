@@ -18,8 +18,11 @@ type Splitter struct {
 }
 
 // NewSplitter creates a new splitter instance
-func NewSplitter(log *logger.Logger) *Splitter {
-    return &Splitter{logger: log}
+func NewSplitter(log *logger.Logger) (*Splitter, error) {
+	if log == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+	return &Splitter{logger: log}, nil
 }
 
 // SplitFileByLines splits a file into multiple files based on the number of lines specified.

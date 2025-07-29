@@ -108,7 +108,10 @@ func TestHousekeepFilesByAge(t *testing.T) {
 			// Create housekeeper with test logger
 			testLogger, _ := logger.NewLogger("housekeeper_test")
 			defer testLogger.Close()
-			hk := NewHousekeeper(testLogger)
+			hk, err := NewHousekeeper(testLogger)
+			if err != nil {
+				t.Fatalf("failed to create housekeeper: %v", err)
+			}
 
 			// For invalid directory test
 			testPath := testDir
@@ -117,7 +120,7 @@ func TestHousekeepFilesByAge(t *testing.T) {
 			}
 
 			// Execute
-			err := hk.HousekeepFilesByAge(testPath, tt.maxAgeDays, tt.recursive)
+			err = hk.HousekeepFilesByAge(testPath, tt.maxAgeDays, tt.recursive)
 
 			// Verify results
 			if tt.expectError {
@@ -184,7 +187,10 @@ func TestHousekeepFilesByCount(t *testing.T) {
 			// Create housekeeper
 			testLogger, _ := logger.NewLogger("housekeeper_test")
 			defer testLogger.Close()
-			hk := NewHousekeeper(testLogger)
+			hk, err := NewHousekeeper(testLogger)
+			if err != nil {
+				t.Fatalf("failed to create housekeeper: %v", err)
+			}
 
 			// For invalid directory test
 			testPath := testDir
@@ -193,7 +199,7 @@ func TestHousekeepFilesByCount(t *testing.T) {
 			}
 
 			// Execute
-			err := hk.HousekeepFilesByCount(testPath, tt.maxFiles)
+			err = hk.HousekeepFilesByCount(testPath, tt.maxFiles)
 
 			// Verify
 			if tt.expectError {

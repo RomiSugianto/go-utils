@@ -27,7 +27,10 @@ func TestSplitFileByLines(t *testing.T) {
 	defer testLogger.Close()
 
 	// Create Splitter with injected logger
-	sp := NewSplitter(testLogger)
+	sp, err := NewSplitter(testLogger)
+	if err != nil {
+		t.Fatalf("failed to create splitter: %v", err)
+	}
 
 	tests := []struct {
 		name          string
@@ -76,7 +79,10 @@ func TestSplitFileByLines(t *testing.T) {
 func TestSplitFileByLines_ErrorCases(t *testing.T) {
 	testLogger, _ := logger.NewLogger("splitter_test")
 	defer testLogger.Close()
-	sp := NewSplitter(testLogger)
+	sp, err := NewSplitter(testLogger)
+	if err != nil {
+		t.Fatalf("failed to create splitter: %v", err)
+	}
 
 	tests := []struct {
 		name         string

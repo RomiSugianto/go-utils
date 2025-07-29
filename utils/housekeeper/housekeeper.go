@@ -17,8 +17,11 @@ type Housekeeper struct {
 }
 
 // NewHousekeep creates a new Housekeep instance
-func NewHousekeeper(log *logger.Logger) *Housekeeper {
-	return &Housekeeper{logger: log}
+func NewHousekeeper(log *logger.Logger) (*Housekeeper, error) {
+	if log == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+	return &Housekeeper{logger: log}, nil
 }
 
 // HousekeepFilesByAge manages the housekeeping of files in a directory based on their age
