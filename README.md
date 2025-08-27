@@ -122,3 +122,77 @@ func main() {
 
 - **NewSplitter(appName string)**: Creates a new splitter instance.
 - **SplitFileByLines(filePath string, linesPerFile int, outputDir string, processedDir string)**: Splits a file into multiple files based on the number of lines specified.
+
+### S3Helper
+
+A simple and effective AWS S3 utility for Go applications. Provides operations for uploading, downloading, listing, and deleting files from Amazon S3.
+
+#### Prerequisites
+
+Before using S3Helper, ensure you have AWS credentials configured. You can set them up using:
+
+```bash
+# Install AWS CLI
+brew install awscli
+
+# Configure AWS credentials
+aws configure
+```
+
+#### Usage
+
+```go
+package main
+
+import (
+    "github.com/romisugianto/go-utils/utils/s3helper"
+)
+
+func main() {
+    // Initialize S3Helper with your AWS configuration
+    s3 := s3helper.S3Helper{
+        ProfileName: "default",      // AWS profile name
+        BucketName:  "your-bucket",   // S3 bucket name
+        EndpointURL: "https://s3.amazonaws.com", // S3 endpoint
+        Region:      "us-west-2",    // AWS region
+    }
+
+    // Upload a file to S3
+    err := s3.UploadFile("local-file.txt", "s3/path/file.txt")
+    if err != nil {
+        panic(err)
+    }
+
+    // List files in S3
+    files, err := s3.ListFiles("s3/path/")
+    if err != nil {
+        panic(err)
+    }
+
+    // Download a file from S3
+    err = s3.DownloadFile("s3/path/file.txt", "downloaded-file.txt")
+    if err != nil {
+        panic(err)
+    }
+
+    // Delete a file from S3
+    err = s3.DeleteFile("s3/path/file.txt")
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+#### S3Helper Methods
+
+- **UploadFile(filePath string, s3Path string) error**: Uploads a local file to the specified S3 path.
+- **DownloadFile(s3Path string, localPath string) error**: Downloads a file from S3 to the local filesystem.
+- **ListFiles(prefix string) ([]string, error)**: Lists all files in the specified S3 path prefix.
+- **DeleteFile(s3Path string) error**: Deletes a file from S3.
+
+#### Configuration Fields
+
+- **ProfileName**: AWS profile name (defaults to "default")
+- **BucketName**: S3 bucket name (required)
+- **EndpointURL**: S3 endpoint URL (defaults to AWS standard endpoints)
+- **Region**: AWS region (required)
