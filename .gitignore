@@ -1,3 +1,12 @@
+**/inbound/
+**/outbound/
+**/input/
+**/output/
+**/archive/
+**/temp/
+**/logs/
+**/TODO.md
+
 # Binaries for programs and plugins
 *.exe
 *.dll
